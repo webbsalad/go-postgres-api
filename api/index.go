@@ -47,7 +47,7 @@ func handler() *gin.Engine {
 		return nil
 	}
 
-	r := gin.Default()
+	r := gin.New()
 
 	r.GET("/:table_name/:item_id", routers.GetItemHandler(&database))
 	r.GET("/:table_name/", routers.GetAllItemsHandler(&database))
