@@ -33,6 +33,8 @@ func (w *ginResponseWriter) Write(data []byte) (int, error) {
 }
 
 func handler() *gin.Engine {
+	gin.SetMode(gin.ReleaseMode)
+
 	cfgDB, err := config.LoadConfig()
 	if err != nil {
 		fmt.Printf("Error reading environment variables: %v\n", err)
