@@ -53,5 +53,9 @@ func handler() *gin.Engine {
 	r.GET("/:table_name/", routers.GetAllItemsHandler(&database))
 	r.DELETE("/:table_name/:item_id", routers.DeleteItemHandler(&database))
 
+	r.NoRoute(func(c *gin.Context) {
+		c.Status(http.StatusNotFound)
+	})
+
 	return r
 }
