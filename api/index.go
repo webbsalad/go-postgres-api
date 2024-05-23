@@ -11,7 +11,11 @@ import (
 )
 
 func Handler(w http.ResponseWriter, r *http.Request) {
-	rout := handler()
+	rout := createRouter()
+	if rout == nil {
+		http.Error(w, "Failed to create router", http.StatusInternalServerError)
+		return
+	}
 
 	ginWriter := &ginResponseWriter{
 		ResponseWriter: w,
@@ -32,29 +36,33 @@ func (w *ginResponseWriter) Write(data []byte) (int, error) {
 	return w.ResponseWriter.Write(data)
 }
 
-func handler() *gin.Engine {
+func createRouter() *gin.Engine {
 	cfgDB, err := config.LoadConfig()
 	if err != nil {
-		fmt.Printf("Error reading environment variables: %v\n", err)
+		fmt.Printf("Ошибка при чтении переменных окружения: %v\n", err)
 		return nil
 	}
 
 	database := db.DBConnection{Config: cfgDB}
-	defer database.Close()
 
 	if err := database.Connect(); err != nil {
-		fmt.Printf("Error while connecting to PostgreSQL: %v\n", err)
+		fmt.Printf("Ошибка при подключении к PostgreSQL: %v\n", err)
 		return nil
 	}
 
 	r := gin.Default()
 
-	r.GET("/:table_name/:item_id", routers.GetItemHandler(&database))
-	r.GET("/:table_name/", routers.GetAllItemsHandler(&database))
-	r.DELETE("/:table_name/:item_id", routers.DeleteItemHandler(&database))
-
-	r.NoRoute(func(c *gin.Context) {
-		c.Status(http.StatusNotFound)
+	r.GET("/:table_name/:item_id", func(c *gin.Context) {
+		defer database.Close()
+		routers.GetItemHandler(&database)(c)
+	})
+	r.GET("/:table_name/", func(c *gin.Context) {
+		defer database.Close()
+		routers.GetAllItemsHandler(&database)(c)
+	})
+	r.DELETE("/:table_name/:item_id", func(c *gin.Context) {
+		defer database.Close()
+		routers.DeleteItemHandler(&database)(c)
 	})
 
 	return r
