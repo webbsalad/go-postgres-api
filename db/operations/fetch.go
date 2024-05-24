@@ -22,7 +22,7 @@ func FetchDataAsJSON(dbConn *db.DBConnection, tableName string, filters map[stri
 	whereClause := ""
 	params := make([]interface{}, 0)
 
-	if filters != nil {
+	if len(filters) > 0 {
 		conditions := make([]string, 0)
 		index := 1
 		for key, value := range filters {
@@ -81,9 +81,5 @@ func FetchDataAsJSON(dbConn *db.DBConnection, tableName string, filters map[stri
 		return "", err
 	}
 
-	if filters == nil {
-		return "[" + string(jsonData) + "]", nil
-	}
-
-	return string(jsonData), nil
+	return "[" + string(jsonData) + "]", nil
 }

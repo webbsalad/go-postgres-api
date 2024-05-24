@@ -13,17 +13,25 @@ func GetItemHandler(dbConn *db.DBConnection) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tableName := c.Param("table_name")
 
-		var filters map[string]string
+		filters := make(map[string]string)
 		if itemIDStr := c.Param("item_id"); itemIDStr != "" {
 			itemID, err := strconv.Atoi(itemIDStr)
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid item ID"})
 				return
 			}
-			filters = map[string]string{"id": strconv.Itoa(itemID)}
+			filters["id"] = strconv.Itoa(itemID)
 		}
 
-		itemsJSON, err := operations.FetchDataAsJSON(dbConn, tableName, filters, "")
+		for key, value := range c.Request.URL.Query() {
+			if key != "sortBy" && len(value) > 0 {
+				filters[key] = value[0]
+			}
+		}
+
+		sortBy := c.DefaultQuery("sortBy", "")
+
+		itemsJSON, err := operations.FetchDataAsJSON(dbConn, tableName, filters, sortBy)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -42,7 +50,16 @@ func GetAllItemsHandler(dbConn *db.DBConnection) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tableName := c.Param("table_name")
 
-		itemsJSON, err := operations.FetchDataAsJSON(dbConn, tableName, nil, "")
+		filters := make(map[string]string)
+		for key, value := range c.Request.URL.Query() {
+			if key != "sortBy" && len(value) > 0 {
+				filters[key] = value[0]
+			}
+		}
+
+		sortBy := c.DefaultQuery("sortBy", "")
+
+		itemsJSON, err := operations.FetchDataAsJSON(dbConn, tableName, filters, sortBy)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
