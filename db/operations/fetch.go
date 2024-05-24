@@ -26,13 +26,13 @@ func FetchDataAsJSON(dbConn *db.DBConnection, tableName string, filters map[stri
 		conditions := make([]string, 0)
 		index := 1
 		for key, value := range filters {
-			if value == "*" {
+			if strings.Contains(value, "*") {
+				value = strings.ReplaceAll(value, "*", "%")
 				conditions = append(conditions, fmt.Sprintf(`"%s" ILIKE $%d`, key, index))
-				params = append(params, "%")
 			} else {
 				conditions = append(conditions, fmt.Sprintf(`"%s" = $%d`, key, index))
-				params = append(params, value)
 			}
+			params = append(params, value)
 			index++
 		}
 		whereClause = " WHERE " + strings.Join(conditions, " AND ")
