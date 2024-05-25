@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-contrib/cors"
@@ -40,14 +40,14 @@ func (w *ginResponseWriter) Write(data []byte) (int, error) {
 func createRouter() *gin.Engine {
 	cfgDB, err := config.LoadConfig()
 	if err != nil {
-		fmt.Printf("Ошибка при чтении переменных окружения: %v\n", err)
+		log.Printf("Ошибка при чтении переменных окружения: %v\n", err)
 		return nil
 	}
 
 	database := db.DBConnection{Config: cfgDB}
 
 	if err := database.Connect(); err != nil {
-		fmt.Printf("Ошибка при подключении к PostgreSQL: %v\n", err)
+		log.Printf("Ошибка при подключении к PostgreSQL: %v\n", err)
 		return nil
 	}
 

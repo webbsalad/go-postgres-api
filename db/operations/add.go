@@ -39,6 +39,5 @@ func AddItem(dbConn *db.DBConnection, tableName string, newItem map[string]inter
 		return err
 	}
 
-	fmt.Printf("Item added successfully to %s\n", tableName)
 	return nil
 }
