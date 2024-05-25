@@ -9,7 +9,7 @@ import (
 	"github.com/webbsalad/go-postgres-api/db/operations"
 )
 
-func GetItemHandler(dbConn *db.DBConnection) gin.HandlerFunc {
+func GetItemRouter(dbConn *db.DBConnection) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tableName := c.Param("table_name")
 
@@ -46,7 +46,7 @@ func GetItemHandler(dbConn *db.DBConnection) gin.HandlerFunc {
 	}
 }
 
-func GetAllItemsHandler(dbConn *db.DBConnection) gin.HandlerFunc {
+func GetAllItemsRouter(dbConn *db.DBConnection) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tableName := c.Param("table_name")
 

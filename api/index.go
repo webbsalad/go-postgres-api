@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/webbsalad/go-postgres-api/config"
 	"github.com/webbsalad/go-postgres-api/db"
@@ -52,17 +53,27 @@ func createRouter() *gin.Engine {
 
 	r := gin.Default()
 
+	r.Use(cors.Default())
+
 	r.GET("/:table_name/:item_id", func(c *gin.Context) {
 		defer database.Close()
-		routers.GetItemHandler(&database)(c)
+		routers.GetItemRouter(&database)(c)
 	})
 	r.GET("/:table_name/", func(c *gin.Context) {
 		defer database.Close()
-		routers.GetAllItemsHandler(&database)(c)
+		routers.GetAllItemsRouter(&database)(c)
+	})
+	r.POST("/:table_name/", func(c *gin.Context) {
+		defer database.Close()
+		routers.PostItemRouter(&database)(c)
+	})
+	r.PATCH("/:table_name/:item_id", func(c *gin.Context) {
+		defer database.Close()
+		routers.PatchItemRouter(&database)(c)
 	})
 	r.DELETE("/:table_name/:item_id", func(c *gin.Context) {
 		defer database.Close()
-		routers.DeleteItemHandler(&database)(c)
+		routers.DeleteItemRouter(&database)(c)
 	})
 
 	return r

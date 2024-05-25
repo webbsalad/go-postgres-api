@@ -9,15 +9,6 @@ import (
 	"github.com/webbsalad/go-postgres-api/db"
 )
 
-func GetMaxID(dbConn *db.DBConnection, tableName string) (int, error) {
-	var maxID int
-	err := dbConn.Conn.QueryRow(context.Background(), fmt.Sprintf("SELECT COALESCE(MAX(id), 0) FROM %s", tableName)).Scan(&maxID)
-	if err != nil {
-		return 0, err
-	}
-	return maxID, nil
-}
-
 func FetchDataAsJSON(dbConn *db.DBConnection, tableName string, filters map[string]string, sortBy string) (string, error) {
 	whereClause := ""
 	params := make([]interface{}, 0)
@@ -36,6 +27,18 @@ func FetchDataAsJSON(dbConn *db.DBConnection, tableName string, filters map[stri
 			index++
 		}
 		whereClause = " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	validSortColumns := []string{"id", "name", "date"}
+	isValidSortBy := false
+	for _, col := range validSortColumns {
+		if sortBy == col {
+			isValidSortBy = true
+			break
+		}
+	}
+	if !isValidSortBy && sortBy != "" {
+		return "", fmt.Errorf("invalid sortBy column: %s", sortBy)
 	}
 
 	orderClause := ""

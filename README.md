@@ -4,6 +4,7 @@
 
 - [github.com/jackc/pgx/v4](https://github.com/jackc/pgx/v4)
 - [github.com/gin-gonic/gin](https://github.com/gin-gonic/gin)
+- [github.com/gin-contrib/cors](https://github.com/gin-contrib/cors)
 
 Проект также развертывается на [Vercel](https://vercel.com/) с использованием файла `vercel.json`, который настроен следующим образом:
 

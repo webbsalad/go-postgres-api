@@ -6,10 +6,11 @@ import (
 	"strconv"
 
 	"github.com/webbsalad/go-postgres-api/db"
+	"github.com/webbsalad/go-postgres-api/utils"
 )
 
 func AddItem(dbConn *db.DBConnection, tableName string, newItem map[string]interface{}) error {
-	maxID, err := GetMaxID(dbConn, tableName)
+	maxID, err := utils.GetMaxID(dbConn, tableName)
 	if err != nil {
 		return err
 	}

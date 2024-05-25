@@ -9,7 +9,7 @@ import (
 	"github.com/webbsalad/go-postgres-api/db/operations"
 )
 
-func DeleteItemHandler(dbConn *db.DBConnection) gin.HandlerFunc {
+func DeleteItemRouter(dbConn *db.DBConnection) gin.HandlerFunc {
 	return func(con *gin.Context) {
 		tableName := con.Param("table_name")
 		itemID, err := strconv.Atoi(con.Param("item_id"))
