@@ -16,7 +16,6 @@ type ConfigDatabase struct {
 }
 
 func LoadConfig() (ConfigDatabase, error) {
-	// Загрузить .env файл
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("Error loading .env file")
