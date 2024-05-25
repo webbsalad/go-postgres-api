@@ -53,7 +53,15 @@ func createRouter() *gin.Engine {
 
 	r := gin.Default()
 
-	r.Use(cors.Default())
+	r.Use(cors.New(cors.Config{
+		AllowAllOrigins:  true,
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
+
+	r.Use(customHeadersMiddleware())
 
 	r.GET("/:table_name/:item_id", func(c *gin.Context) {
 		defer database.Close()
@@ -77,4 +85,12 @@ func createRouter() *gin.Engine {
 	})
 
 	return r
+}
+
+func customHeadersMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("X-Custom-Header", "value")
+		c.Writer.Header().Set("X-Another-Custom-Header", "another_value")
+		c.Next()
+	}
 }
