@@ -61,6 +61,13 @@ func createRouter() *gin.Engine {
 		AllowCredentials: true,
 	}))
 
+	r.OPTIONS("/*path", func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept")
+		c.AbortWithStatus(http.StatusNoContent)
+	})
+
 	r.Use(customHeadersMiddleware())
 
 	r.GET("/:table_name/:item_id", func(c *gin.Context) {
