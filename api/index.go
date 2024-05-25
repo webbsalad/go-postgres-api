@@ -89,8 +89,9 @@ func createRouter() *gin.Engine {
 
 func customHeadersMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Writer.Header().Set("X-Custom-Header", "value")
-		c.Writer.Header().Set("X-Another-Custom-Header", "another_value")
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept")
 		c.Next()
 	}
 }
