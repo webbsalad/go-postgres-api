@@ -5,6 +5,7 @@
 - [github.com/jackc/pgx/v4](https://github.com/jackc/pgx/v4)
 - [github.com/gin-gonic/gin](https://github.com/gin-gonic/gin)
 - [github.com/gin-contrib/cors](https://github.com/gin-contrib/cors)
+- [github.com/ilyakaznacheev/cleanenv](https://github.com/ilyakaznacheev/cleanenv)
 
 Проект также развертывается на [Vercel](https://vercel.com/) с использованием файла `vercel.json`, который настроен следующим образом:
 
@@ -39,5 +40,17 @@ Project:.
 ├───db
 │   └───operations   // Файлы с операциями с базой данных
 └───routers   // Файлы с операциями на серверной части
+└───utils   // Вспомогательные функции
 ```
 
+### Секретные данные
+Для корректной работы с базой данных и интеграции Vercel с GitHub Secrets, необходимо добавить следующие переменные в GitHub Secrets:
+```plaintext
+VERCEL_TOKEN
+DB_PORT
+DB_HOST
+DB_NAME
+DB_USER
+DB_PASSWORD
+```
+(при локалдьной работе нужно заменить функцию в файле /config/config.go а данные записать в файл .env)
