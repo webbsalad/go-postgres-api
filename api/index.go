@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/webbsalad/go-postgres-api/config"
@@ -19,7 +18,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	adaptor.FiberApp(app).ServeHTTP(w, r)
+	app.Listen(":3000")
 }
 
 func createApp() *fiber.App {
