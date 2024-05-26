@@ -5,23 +5,19 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/webbsalad/go-postgres-api/config"
 	"github.com/webbsalad/go-postgres-api/db"
 	"github.com/webbsalad/go-postgres-api/routers"
 )
 
 func Handler(w http.ResponseWriter, r *http.Request) {
-	app := createApp()
-	if app == nil {
-		http.Error(w, "Failed to create Fiber app", http.StatusInternalServerError)
-		return
-	}
+	r.RequestURI = r.URL.String()
 
-	app.Listen(":3000")
+	createApp().ServeHTTP(w, r)
 }
 
-func createApp() *fiber.App {
+func createApp() http.HandlerFunc {
 	cfgDB, err := config.LoadConfig()
 	if err != nil {
 		log.Printf("Ошибка при чтении переменных окружения: %v\n", err)
@@ -37,50 +33,32 @@ func createApp() *fiber.App {
 
 	app := fiber.New()
 
-	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-		AllowMethods: "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-		AllowHeaders: "*",
-	}))
-
-	app.All("/*", func(c *fiber.Ctx) error {
-		c.Set("Access-Control-Allow-Origin", "*")
-		c.Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		c.Set("Access-Control-Allow-Headers", "*")
-		return c.SendStatus(fiber.StatusNoContent)
+	app.Get("/:table_name/:item_id", func(ctx *fiber.Ctx) error {
+		defer database.Close()
+		routers.GetItemRouter(&database)(ctx)
+		return routers.GetItemRouter(&database)(ctx)
 	})
 
-	app.Use(customHeadersMiddleware())
-
-	app.Get("/:table_name/:item_id", func(c *fiber.Ctx) error {
+	app.Get("/:table_name/", func(ctx *fiber.Ctx) error {
 		defer database.Close()
-		return routers.GetItemRouter(&database)(c)
+		routers.GetAllItemsRouter(&database)(ctx)
+		return routers.GetAllItemsRouter(&database)(ctx)
 	})
-	app.Get("/:table_name/", func(c *fiber.Ctx) error {
+	app.Post("/:table_name/", func(ctx *fiber.Ctx) error {
 		defer database.Close()
-		return routers.GetAllItemsRouter(&database)(c)
+		routers.PostItemRouter(&database)(ctx)
+		return routers.PostItemRouter(&database)(ctx)
 	})
-	app.Post("/:table_name/", func(c *fiber.Ctx) error {
+	app.Patch("/:table_name/:item_id", func(ctx *fiber.Ctx) error {
 		defer database.Close()
-		return routers.PostItemRouter(&database)(c)
+		routers.PatchItemRouter(&database)(ctx)
+		return routers.PatchItemRouter(&database)(ctx)
 	})
-	app.Patch("/:table_name/:item_id", func(c *fiber.Ctx) error {
+	app.Delete("/:table_name/:item_id", func(ctx *fiber.Ctx) error {
 		defer database.Close()
-		return routers.PatchItemRouter(&database)(c)
-	})
-	app.Delete("/:table_name/:item_id", func(c *fiber.Ctx) error {
-		defer database.Close()
-		return routers.DeleteItemRouter(&database)(c)
+		routers.DeleteItemRouter(&database)(ctx)
+		return routers.DeleteItemRouter(&database)(ctx)
 	})
 
-	return app
-}
-
-func customHeadersMiddleware() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		c.Set("Access-Control-Allow-Origin", "*")
-		c.Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		c.Set("Access-Control-Allow-Headers", "*")
-		return c.Next()
-	}
+	return adaptor.FiberApp(app)
 }
