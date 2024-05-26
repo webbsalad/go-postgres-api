@@ -1,75 +1,61 @@
 package routers
 
 import (
-	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"github.com/webbsalad/go-postgres-api/db"
 	"github.com/webbsalad/go-postgres-api/db/operations"
 )
 
-func GetItemRouter(dbConn *db.DBConnection) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		tableName := c.Param("table_name")
+func GetItemRouter(dbConn *db.DBConnection) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		tableName := c.Params("table_name")
 
 		filters := make(map[string]string)
-		if itemIDStr := c.Param("item_id"); itemIDStr != "" {
+		if itemIDStr := c.Params("item_id"); itemIDStr != "" {
 			itemID, err := strconv.Atoi(itemIDStr)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid item ID"})
-				return
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid item ID"})
 			}
 			filters["id"] = strconv.Itoa(itemID)
 		}
 
-		for key, value := range c.Request.URL.Query() {
-			if key != "sortBy" && len(value) > 0 {
-				filters[key] = value[0]
-			}
-		}
+		c.QueryParser(&filters)
 
-		sortBy := c.DefaultQuery("sortBy", "")
+		sortBy := c.Query("sortBy", "")
 
 		itemsJSON, err := operations.FetchDataAsJSON(dbConn, tableName, filters, sortBy)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
 
 		if itemsJSON == "[]" {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Item not found"})
-			return
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Item not found"})
 		}
 
-		c.Data(http.StatusOK, "application/json; charset=utf-8", []byte(itemsJSON[1:len(itemsJSON)-1]))
+		return c.Status(fiber.StatusOK).SendString(itemsJSON[1 : len(itemsJSON)-1])
 	}
 }
 
-func GetAllItemsRouter(dbConn *db.DBConnection) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		tableName := c.Param("table_name")
+func GetAllItemsRouter(dbConn *db.DBConnection) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		tableName := c.Params("table_name")
 
 		filters := make(map[string]string)
-		for key, value := range c.Request.URL.Query() {
-			if key != "sortBy" && len(value) > 0 {
-				filters[key] = value[0]
-			}
-		}
+		c.QueryParser(&filters)
 
-		sortBy := c.DefaultQuery("sortBy", "")
+		sortBy := c.Query("sortBy", "")
 
 		itemsJSON, err := operations.FetchDataAsJSON(dbConn, tableName, filters, sortBy)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
 
 		if itemsJSON == "[]" {
-			c.JSON(http.StatusNotFound, gin.H{"error": "No items found"})
-			return
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "No items found"})
 		}
 
-		c.Data(http.StatusOK, "application/json; charset=utf-8", []byte(itemsJSON[1:len(itemsJSON)-1]))
+		return c.Status(fiber.StatusOK).SendString(itemsJSON[1 : len(itemsJSON)-1])
 	}
 }

@@ -1,29 +1,25 @@
 package routers
 
 import (
-	"net/http"
-
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"github.com/webbsalad/go-postgres-api/db"
 	"github.com/webbsalad/go-postgres-api/db/operations"
 )
 
-func PostItemRouter(dbConn *db.DBConnection) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		tableName := c.Param("table_name")
+func PostItemRouter(dbConn *db.DBConnection) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		tableName := c.Params("table_name")
 		var newItem map[string]interface{}
 
-		if err := c.ShouldBindJSON(&newItem); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
-			return
+		if err := c.BodyParser(&newItem); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid JSON"})
 		}
 
 		err := operations.AddItem(dbConn, tableName, newItem)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		c.JSON(http.StatusOK, newItem)
+		return c.Status(fiber.StatusOK).JSON(newItem)
 	}
 }

@@ -4,40 +4,25 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/adaptor/v2"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/webbsalad/go-postgres-api/config"
 	"github.com/webbsalad/go-postgres-api/db"
 	"github.com/webbsalad/go-postgres-api/routers"
 )
 
 func Handler(w http.ResponseWriter, r *http.Request) {
-	rout := createRouter()
-	if rout == nil {
-		http.Error(w, "Failed to create router", http.StatusInternalServerError)
+	app := createApp()
+	if app == nil {
+		http.Error(w, "Failed to create Fiber app", http.StatusInternalServerError)
 		return
 	}
 
-	ginWriter := &ginResponseWriter{
-		ResponseWriter: w,
-	}
-
-	rout.ServeHTTP(ginWriter, r)
+	adaptor.FiberApp(app).ServeHTTP(w, r)
 }
 
-type ginResponseWriter struct {
-	http.ResponseWriter
-}
-
-func (w *ginResponseWriter) WriteHeader(statusCode int) {
-	w.ResponseWriter.WriteHeader(statusCode)
-}
-
-func (w *ginResponseWriter) Write(data []byte) (int, error) {
-	return w.ResponseWriter.Write(data)
-}
-
-func createRouter() *gin.Engine {
+func createApp() *fiber.App {
 	cfgDB, err := config.LoadConfig()
 	if err != nil {
 		log.Printf("Ошибка при чтении переменных окружения: %v\n", err)
@@ -51,54 +36,52 @@ func createRouter() *gin.Engine {
 		return nil
 	}
 
-	r := gin.Default()
+	app := fiber.New()
 
-	r.Use(cors.New(cors.Config{
-		AllowAllOrigins:  true,
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+		AllowMethods: "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+		AllowHeaders: "*",
 	}))
 
-	r.OPTIONS("/*path", func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept")
-		c.AbortWithStatus(http.StatusNoContent)
+	app.All("/*", func(c *fiber.Ctx) error {
+		c.Set("Access-Control-Allow-Origin", "*")
+		c.Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+		c.Set("Access-Control-Allow-Headers", "*")
+		return c.SendStatus(fiber.StatusNoContent)
 	})
 
-	r.Use(customHeadersMiddleware())
+	app.Use(customHeadersMiddleware())
 
-	r.GET("/:table_name/:item_id", func(c *gin.Context) {
+	app.Get("/:table_name/:item_id", func(c *fiber.Ctx) error {
 		defer database.Close()
-		routers.GetItemRouter(&database)(c)
+		return routers.GetItemRouter(&database)(c)
 	})
-	r.GET("/:table_name/", func(c *gin.Context) {
+	app.Get("/:table_name/", func(c *fiber.Ctx) error {
 		defer database.Close()
-		routers.GetAllItemsRouter(&database)(c)
+		return routers.GetAllItemsRouter(&database)(c)
 	})
-	r.POST("/:table_name/", func(c *gin.Context) {
+	app.Post("/:table_name/", func(c *fiber.Ctx) error {
 		defer database.Close()
-		routers.PostItemRouter(&database)(c)
+		return routers.PostItemRouter(&database)(c)
 	})
-	r.PATCH("/:table_name/:item_id", func(c *gin.Context) {
+	app.Patch("/:table_name/:item_id", func(c *fiber.Ctx) error {
 		defer database.Close()
-		routers.PatchItemRouter(&database)(c)
+		return routers.PatchItemRouter(&database)(c)
 	})
-	r.DELETE("/:table_name/:item_id", func(c *gin.Context) {
+	app.Delete("/:table_name/:item_id", func(c *fiber.Ctx) error {
 		defer database.Close()
-		routers.DeleteItemRouter(&database)(c)
+		return routers.DeleteItemRouter(&database)(c)
 	})
 
-	return r
+	return app
 }
 
-func customHeadersMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept")
-		c.Next()
+func customHeadersMiddleware() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		c.Set("Access-Control-Allow-Origin", "*")
+		c.Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+		c.Set("Access-Control-Allow-Headers", "*")
+		return c.Next()
 	}
 }

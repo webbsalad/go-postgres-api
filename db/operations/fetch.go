@@ -29,16 +29,8 @@ func FetchDataAsJSON(dbConn *db.DBConnection, tableName string, filters map[stri
 		whereClause = " WHERE " + strings.Join(conditions, " AND ")
 	}
 
-	validSortColumns := []string{"id", "name", "date"}
-	isValidSortBy := false
-	for _, col := range validSortColumns {
-		if sortBy == col {
-			isValidSortBy = true
-			break
-		}
-	}
-	if !isValidSortBy && sortBy != "" {
-		return "", fmt.Errorf("invalid sortBy column: %s", sortBy)
+	if sortBy == "-" {
+		sortBy = ""
 	}
 
 	orderClause := ""

@@ -1,35 +1,31 @@
 package routers
 
 import (
-	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 	"github.com/webbsalad/go-postgres-api/db"
 	"github.com/webbsalad/go-postgres-api/db/operations"
 )
 
-func PatchItemRouter(dbConn *db.DBConnection) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		tableName := c.Param("table_name")
-		itemID, err := strconv.Atoi(c.Param("item_id"))
+func PatchItemRouter(dbConn *db.DBConnection) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		tableName := c.Params("table_name")
+		itemID, err := strconv.Atoi(c.Params("item_id"))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid item ID"})
-			return
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid item ID"})
 		}
 
 		var newData map[string]interface{}
-		if err := c.ShouldBindJSON(&newData); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
-			return
+		if err := c.BodyParser(&newData); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid JSON"})
 		}
 
 		err = operations.UpdateItemStatus(dbConn, tableName, itemID, newData)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
 
-		c.String(http.StatusOK, "Item updated successfully")
+		return c.SendString("Item updated successfully")
 	}
 }
