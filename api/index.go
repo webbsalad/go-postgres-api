@@ -6,7 +6,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/webbsalad/go-postgres-api/config"
 	"github.com/webbsalad/go-postgres-api/db"
 	"github.com/webbsalad/go-postgres-api/routers"
@@ -14,7 +13,6 @@ import (
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 	r.RequestURI = r.URL.String()
-
 	createApp().ServeHTTP(w, r)
 }
 
@@ -34,37 +32,48 @@ func createApp() http.HandlerFunc {
 
 	app := fiber.New()
 
-	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-		AllowHeaders: "*",
-	}))
+	app.Use(func(c *fiber.Ctx) error {
+		origin := c.Get("Origin")
+		allowedOrigins := []string{"https://db-flask-test.vercel.app", "http://127.0.0.1:8080"}
+
+		if contains(allowedOrigins, origin) {
+			c.Set("Access-Control-Allow-Origin", origin)
+		} else {
+			c.Set("Access-Control-Allow-Origin", "*")
+		}
+		c.Set("Access-Control-Allow-Methods", "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS")
+		c.Set("Access-Control-Allow-Headers", "Origin,Content-Type,Accept,Authorization")
+		if c.Method() == fiber.MethodOptions {
+			return c.SendStatus(fiber.StatusNoContent)
+		}
+		return c.Next()
+	})
 
 	app.Get("/:table_name/:item_id", func(ctx *fiber.Ctx) error {
-		defer database.Close()
-		routers.GetItemRouter(&database)(ctx)
 		return routers.GetItemRouter(&database)(ctx)
 	})
 
 	app.Get("/:table_name/", func(ctx *fiber.Ctx) error {
-		defer database.Close()
-		routers.GetAllItemsRouter(&database)(ctx)
 		return routers.GetAllItemsRouter(&database)(ctx)
 	})
 	app.Post("/:table_name/", func(ctx *fiber.Ctx) error {
-		defer database.Close()
-		routers.PostItemRouter(&database)(ctx)
 		return routers.PostItemRouter(&database)(ctx)
 	})
 	app.Patch("/:table_name/:item_id", func(ctx *fiber.Ctx) error {
-		defer database.Close()
-		routers.PatchItemRouter(&database)(ctx)
 		return routers.PatchItemRouter(&database)(ctx)
 	})
 	app.Delete("/:table_name/:item_id", func(ctx *fiber.Ctx) error {
-		defer database.Close()
-		routers.DeleteItemRouter(&database)(ctx)
 		return routers.DeleteItemRouter(&database)(ctx)
 	})
 
 	return adaptor.FiberApp(app)
+}
+
+func contains(slice []string, item string) bool {
+	for _, a := range slice {
+		if a == item {
+			return true
+		}
+	}
+	return false
 }
