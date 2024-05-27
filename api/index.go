@@ -34,9 +34,7 @@ func createApp() http.HandlerFunc {
 
 	app.Use(func(c *fiber.Ctx) error {
 		origin := c.Get("Origin")
-		allowedOrigins := []string{"https://db-flask-test.vercel.app", "http://127.0.0.1:8080"}
-
-		if contains(allowedOrigins, origin) {
+		if origin != "" {
 			c.Set("Access-Control-Allow-Origin", origin)
 		} else {
 			c.Set("Access-Control-Allow-Origin", "*")
@@ -67,13 +65,4 @@ func createApp() http.HandlerFunc {
 	})
 
 	return adaptor.FiberApp(app)
-}
-
-func contains(slice []string, item string) bool {
-	for _, a := range slice {
-		if a == item {
-			return true
-		}
-	}
-	return false
 }
