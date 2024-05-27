@@ -33,18 +33,20 @@ func createApp() http.HandlerFunc {
 	app := fiber.New()
 
 	app.Use(func(c *fiber.Ctx) error {
-		origin := c.Get("Origin")
-		if origin != "" {
-			c.Set("Access-Control-Allow-Origin", origin)
-		} else {
-			c.Set("Access-Control-Allow-Origin", "*")
-		}
+		c.Set("Access-Control-Allow-Origin", "*")
 		c.Set("Access-Control-Allow-Methods", "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS")
 		c.Set("Access-Control-Allow-Headers", "Origin,Content-Type,Accept,Authorization")
 		if c.Method() == fiber.MethodOptions {
 			return c.SendStatus(fiber.StatusNoContent)
 		}
 		return c.Next()
+	})
+
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.SendStatus(fiber.StatusNoContent)
+	})
+	app.Get("/favicon.ico", func(c *fiber.Ctx) error {
+		return c.SendStatus(fiber.StatusNoContent)
 	})
 
 	app.Get("/:table_name/:item_id", func(ctx *fiber.Ctx) error {
