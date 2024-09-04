@@ -15,6 +15,7 @@ type ConfigDatabase struct {
 }
 // a ya toje tolko v main
 
+// ya teshu
 // prod
 func LoadConfig() (ConfigDatabase, error) {
 	var cfg ConfigDatabase
