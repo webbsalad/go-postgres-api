@@ -14,6 +14,7 @@ type ConfigDatabase struct {
 	Password string `env:"DB_PASSWORD"`
 }
 
+// ya teshu
 // prod
 func LoadConfig() (ConfigDatabase, error) {
 	var cfg ConfigDatabase
