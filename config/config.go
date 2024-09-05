@@ -13,9 +13,9 @@ type ConfigDatabase struct {
 	User     string `env:"DB_USER"`
 	Password string `env:"DB_PASSWORD"`
 }
+
 // a ya toje tolko v main
 
-// ya teshu
 // prod
 func LoadConfig() (ConfigDatabase, error) {
 	var cfg ConfigDatabase
